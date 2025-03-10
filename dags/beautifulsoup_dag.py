@@ -1,7 +1,7 @@
 from airflow.decorators import dag, task
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
+from include.database.insert_scraping import insert_into_postgres
 import random
 import requests
 import time
@@ -9,7 +9,8 @@ import time
 ROOT = "https://www.welcometothejungle.com"
 WEBSITE = f"{ROOT}/fr/pages/emploi-data-engineer-paris-75000"
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+    'Cache-Control': 'no-cache'
 }
 
 @dag(
@@ -29,12 +30,14 @@ def beautifulsoup_dag():
         last_page = pagination[-2].text
         jobs_urls = []
 
-        for page in range(1, int(last_page)+1):
+        # for page in range(1, int(last_page)+1): #BUG on the website, the content of the first page is always sent
+        for page in range(1, 2):
             website = f'{WEBSITE}?page={page}'
             result = requests.get(website, headers=HEADERS)
             soup = BeautifulSoup(result.text, "lxml")
-            partial_urls = soup.find("ul", {"kind": "jobs"}).find_all("a", mode="list", href=True)
-            page_jobs = [f"{ROOT}{u["href"]}" for u in partial_urls]
+            page_jobs_list = soup.find("ul", {"kind": "jobs"}).find_all("li")
+            date_min = datetime.today().date() - timedelta(days=30)
+            page_jobs = [f"{ROOT}{job.find("a")["href"]}" for job in page_jobs_list if datetime.fromisoformat(job.find("time")["datetime"].replace("Z", "")).date() >= date_min]
             jobs_urls += page_jobs
             time.sleep(random.uniform(3, 7))
 
@@ -66,6 +69,7 @@ def beautifulsoup_dag():
             profile_searched_list = profile_section.find("div", {"data-is-view-more": True}).find_all(text=True)
             profile_searched = "\n".join([l.get_text(strip=True) for l in profile_searched_list])
 
+        insert_into_postgres((date_posted, title, company, location, job_description, profile_searched, job_url))
         time.sleep(random.uniform(3, 7))
 
         return job_url

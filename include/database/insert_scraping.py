@@ -23,3 +23,5 @@ def insert_into_postgres(job_data: tuple):
     connection.commit()
     cursor.close()
     connection.close()
+
+    print("The data has been imported into the database")

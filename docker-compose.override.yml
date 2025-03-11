@@ -1,4 +1,38 @@
 services:
+  postgres:
+    networks:
+      - astro_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - astro_network
+
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: postgres
+      MB_DB_HOST: postgres
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres
+      MB_DB_PASS: postgres
+    networks:
+      - astro_network
+
   zookeeper:
     image: bitnami/zookeeper:latest
     container_name: zookeeper_service
@@ -32,3 +66,4 @@ services:
 
 networks:
   astro_network:
+    driver: bridge

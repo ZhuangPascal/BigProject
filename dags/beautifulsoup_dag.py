@@ -46,7 +46,7 @@ def beautifulsoup_dag():
     @task(pool="scraping_pool")
     def scrape_job(job_url):
         """Collect the job data and store it in a database"""
-        print(job_url)
+        print("Job URL: ", job_url)
         response = requests.get(job_url, headers=HEADERS)
         soup = BeautifulSoup(response.text, "lxml")
 

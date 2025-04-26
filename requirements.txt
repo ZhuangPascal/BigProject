@@ -3,3 +3,7 @@ apache-airflow-providers-postgres
 requests
 beautifulsoup4
 lxml
+confluent-kafka
+psycopg2-binary
+faker
+pyspark

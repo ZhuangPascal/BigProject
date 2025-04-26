@@ -1,0 +1,4 @@
+gcc
+libpq-dev
+python3-dev
+default-libmysqlclient-dev
